@@ -1,0 +1,24 @@
+Após subir o ambiente com os templates do diretório code, logar na máquina do zookeeper e validar que o serviço está sendo executado normalmente com o comando abaixo:
+
+sudo systemctl status zookeeper
+
+Para verificar os logs:
+
+journalctl -u zookeeper
+
+Pode-se verificar as variáveis existentes no bach listando o conteúdo do arquivo bash_profile:
+
+cat .bash_profile
+
+É possível também abrir um cliente interativo (shell) que se conecta ao Zookeeper:
+
+kafka/bin/zookeeper-shell.sh localhost:2181
+
+Para verificar o arquivo de configuração do Zookeeper:
+
+cat zookeeper.properties
+
+Para validar os parâmetros de como o zookeeper é inicializado, pode-se verificar o arquivo de serviço do systemd:
+
+cat /etc/systemd/system/zookeeper.service
+
