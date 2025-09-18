@@ -1,3 +1,5 @@
+==> Seção preparando ambiente:
+
 Após subir o ambiente com os templates do diretório code, logar na máquina do zookeeper e validar que o serviço está sendo executado normalmente com o comando abaixo:
 
 sudo systemctl status zookeeper
@@ -21,4 +23,57 @@ cat zookeeper.properties
 Para validar os parâmetros de como o zookeeper é inicializado, pode-se verificar o arquivo de serviço do systemd:
 
 cat /etc/systemd/system/zookeeper.service
+
+
+Após validação do Zookeeper, vamos logar na máquina do kafka:
+
+ssh -i monitoring-and-operations/pem/kafka.pem ec2-user@<ip-do-kafka>
+
+O arquivo kafka.properties está localizado em:
+
+Com o comando lsblk é possível verificar os discos anexados a instância do kafka e onde estão montados.
+
+Os mesmo comandos de verificação do serviço do zookeeper podem ser utilizados para o kafka, alterando o nome do serviço para kafka.
+
+
+Faça um teste de criaçao de um tópico:
+
+kafka/bin/kafka-topics.sh --create --topic meu-topico --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+
+Agora valide se o tópico foi criado:
+
+kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9092
+
+Para produzir mensagens no tópico criado:
+
+kafka/bin/kafka-console-producer.sh --topic meu-topico --bootstrap-server localhost:9092
+
+Para consumir as mensagens do tópico:
+
+kafka/bin/kafka-console-consumer.sh --topic meu-topico --bootstrap-server localhost:9092 --from-beginning.
+
+
+==> Seção administrando o Kafka:
+
+Aqui iremos subir algumas ferramentas de administração do kafka, o zoonavigator, kafka manager e kafka monitor. Para iniciarmos subar uma instância EC2 com o sistema operacional Amazon Linux 2.
+
+Agora, verifique os passos de instalação do Docker e Docker-compose no arquivo monitoring-and-operations/code/0-basic-admins-tools/admin-setup.sh
+
+Instalado o Docker e o Docker-compose, vamos subir o zoonavigator:
+
+Execute o yaml no diretório monitoring-and-operations/code/0-basic-admin-tools com o comando:
+docker-compose -f zoonavigator.yml up -d
+
+OBS: Executar o comando acima dentro da instância EC2 criada.
+
+Após isso os passos para instalação das ferramentas de administração do Kafka estão no arquivo monitoring-and-operations/code/0-basic-admins-tools/admin-setup.sh
+
+==> Seção monitorando o Kafka:
+
+Por padrão o kafka expõe métricas via JMX na porta 9999. Para validar isso, logue na máquina do kafka e execute o comando:
+netstat -tuln | grep 9999
+
+Se a porta estiver aberta, você verá uma linha semelhante a esta:
+tcp6       0      0 :::9999                 :::*                    LISTEN
+
 
