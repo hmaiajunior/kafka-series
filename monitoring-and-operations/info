@@ -1,3 +1,5 @@
+OBS:. Tive falha para subir o ambiente através dos templates enviados, então irei seguir acompanhando o treinamento a partir de uma stack criada localmente com docker-compose. Os yamls encontra-se no diretório local chamado compose.
+
 ==> Seção preparando ambiente:
 
 Após subir o ambiente com os templates do diretório code, logar na máquina do zookeeper e validar que o serviço está sendo executado normalmente com o comando abaixo:
@@ -38,7 +40,7 @@ Os mesmo comandos de verificação do serviço do zookeeper podem ser utilizados
 
 Faça um teste de criaçao de um tópico:
 
-kafka/bin/kafka-topics.sh --create --topic meu-topico --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka/bin/kafka-topics.sh --create --topic meu-topico --bootstrap-server localhost:29091 --partitions 3 --replication-factor 1
 
 Agora valide se o tópico foi criado:
 
@@ -46,11 +48,11 @@ kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9092
 
 Para produzir mensagens no tópico criado:
 
-kafka/bin/kafka-console-producer.sh --topic meu-topico --bootstrap-server localhost:9092
+kafka/bin/kafka-console-producer.sh --topic meu-topico --bootstrap-server localhost:29091
 
 Para consumir as mensagens do tópico:
 
-kafka/bin/kafka-console-consumer.sh --topic meu-topico --bootstrap-server localhost:9092 --from-beginning.
+kafka/bin/kafka-console-consumer.sh --topic meu-topico --bootstrap-server localhost:29091 --from-beginning.
 
 
 ==> Seção administrando o Kafka:
@@ -75,5 +77,13 @@ netstat -tuln | grep 9999
 
 Se a porta estiver aberta, você verá uma linha semelhante a esta:
 tcp6       0      0 :::9999                 :::*                    LISTEN
+
+Agora devemos baixar o java jmx exporter agent que será responsável por expor os JMX Beans via http para que o prometheus possa consumir.  Esse Java agent roda dentro da aplicação e coleta os valores JMX MBeans. Atente-se que o agent deve rodar dentro do kafka.
+
+
+
+
+
+
 
 
