@@ -121,3 +121,9 @@ rules:
   type: GAUGE
   labels:
     "$4": "$5"
+
+# Specific rules for commonly used metrics
+- pattern: kafka.server<type=BrokerTopicMetrics, name=(MessagesInPerSec)><>Count
+  name: kafka_messages_in_total
+  type: COUNTER
+  help: Total number of messages received per second
