@@ -116,7 +116,10 @@ services:
 
   broker-2:
     platform: linux/amd64
-    image: confluentinc/cp-kafka:${CONFLUENT_PLATFORM_VERSION:-7.4.0}
+    build:
+      context: .
+      dockerfile: dockerfile.kafka
+    #image: confluentinc/cp-kafka:${CONFLUENT_PLATFORM_VERSION:-7.4.0}
     container_name: broker-2
     restart: unless-stopped
     ports:
@@ -127,6 +130,7 @@ services:
       - zookeeper
     volumes:
       - ./jmx:/etc/kafka/jmx
+      - ./jolokia:/opt/jolokia
     mem_limit: 1024m
     cpus: 0.5
     environment:
@@ -149,6 +153,7 @@ services:
         -Dcom.sun.management.jmxremote.authenticate=false
         -Dcom.sun.management.jmxremote.ssl=false
         -javaagent:/etc/kafka/jmx/jmx_prometheus_javaagent-1.4.0.jar=9112:/etc/kafka/jmx/kafka-jmx-config.yaml
+        -javaagent:/opt/jolokia/jolokia-agent-jvm-2.3.0-javaagent.jar=host=*
     healthcheck:
       test: nc -vz localhost 9092
       interval: 10s
@@ -163,7 +168,10 @@ services:
 
   broker-3:
     platform: linux/amd64
-    image: confluentinc/cp-kafka:${CONFLUENT_PLATFORM_VERSION:-7.4.0}
+    build:
+      context: .
+      dockerfile: dockerfile.kafka
+    #image: confluentinc/cp-kafka:${CONFLUENT_PLATFORM_VERSION:-7.4.0}
     container_name: broker-3
     restart: unless-stopped
     ports:
@@ -174,6 +182,7 @@ services:
       - zookeeper
     volumes:
       - ./jmx:/etc/kafka/jmx
+      - ./jolokia:/opt/jolokia
     mem_limit: 1024m
     cpus: 0.5
     environment:
@@ -196,6 +205,7 @@ services:
         -Dcom.sun.management.jmxremote.authenticate=false
         -Dcom.sun.management.jmxremote.ssl=false
         -javaagent:/etc/kafka/jmx/jmx_prometheus_javaagent-1.4.0.jar=9113:/etc/kafka/jmx/kafka-jmx-config.yaml
+        -javaagent:/opt/jolokia/jolokia-agent-jvm-2.3.0-javaagent.jar=host=*
     healthcheck:
       test: nc -vz localhost 9093
       interval: 10s
