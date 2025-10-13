@@ -1,4 +1,4 @@
-Number of active controller: Deve sempre ser 1
+Number of active controller: Deve sempre ser 1 (monitorar se está mudando o controller)
 
 Number of Under Replicated Partitions(URP): Deve sempre ser 0
 

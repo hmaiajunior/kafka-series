@@ -81,6 +81,92 @@ tcp6       0      0 :::9999                 :::*                    LISTEN
 Agora devemos baixar o java jmx exporter agent que será responsável por expor os JMX Beans via http para que o prometheus possa consumir.  Esse Java agent roda dentro da aplicação e coleta os valores JMX MBeans. Atente-se que o agent deve rodar dentro do kafka.
 
 
+==> Seção kafka operations:
+
+Algumas operações no kafka, como o restart dos brokers por alguma necessidade específica, podem ser feitas de forma manual, porém é bem mais interessante realizar de forma automatizada. O kafka-utils da empresa Yelp pode ajudar com isso.
+
+Baixe a ferramenta jolokia (agente http) e a coloque dentro de um diretório no broker
+Agora será necessário adicionar um novo agent na variável KAFKA_OPTS:
+    - "-javaagent:/home/ec2-user/jolokia/jolokia-jvm-2.3.0-javaagent.jar=host=*"
+
+Atente-se para a alteração realizada no compose para que fosse possível a instalação do jq na imagem da confluent.
+
+curl localhost:8778/jolokia
+
+curl localhost:8778/jolokia/read/kafka.server:type=KafkaRequestHandlerPool,name=RequestHandlerAvgIdlePercent | jq
+
+curl localhost:8778/jolokia/read/kafka.server:name=UnderReplicatedPartitions,type=ReplicaManager/Value | jq
+
+
+
+Algumas alterações nas configurações do kafka podem ser realizadas sem a necessidade do restart dos nodes. Na documentação (https://kafka.apache.org/38/documentation.html#brokerconfigs) é possível encontrar a lista de operações, conhecidas como Dynamic Update Mode, que irá indicar o modo do update que podem ser 3:
+
+    - read-only: Requer o restart do broker
+    - per-broker: Deve ser atualizada dinamicamente em cada um dos brokers
+    - cluster-wide: Deve ser realizada dinamicamente usando a opção de cluster-wide
+
+
+Com o comando abaixo é possível listar as configurações atribuídas dinamicamente:
+
+==> kafka-configs --bootstrap-server localhost:9091 --entity-type brokers --entity-name 1 --describe
+
+OBS:. Altere o entity-name de acordo com o broker em que estiver logado
+
+Para alterar por exemplo o número de num.io.threads e num.network.threads, realize o comando abaixo em cada um dos brokers realizando as mudanças necessárias de acordo com o broker:
+
+==> kafka-configs --bootstrap-server localhost:9091 --entity-type brokers -entity-name 1 --alter --add-config num.io.threads=16,num.network.threads=8
+
+
+Para monitorar o num.io.thread via JMX procure pela métrica "RequestHandlerAvgIdlePercent"
+
+Para monitorar o num.network.thread via JMX procure pela métrica "NetworkProcessorAvgIdlePercent"
+
+
+==> Outra operação importante no kafka é a de rebalance que é quando as partições dos tópicos ficam distribuídas de forma desigual nos clusters. Para executar o balanceamento de forma manual é necessário fazer o seguinte:
+
+    - Criar um plano de realocação:
+
+        - kafka-reassign-partitions.sh \
+        --bootstrap-server <broker> \
+        --generate \
+        --topics-to-move-json-file topics.json \
+        --broker-list "1,2,3" \
+        --replication-throttle 10485760
+
+        O comando acima irá gerar um JSON com a distribuição atual e a proposta de nova distribuição de réplicas. Importante setar o replication-throttle para limitar o tráfego de replicação entre os brokers durante o rebalance e evitar o saturamento de rede e discos durante o processo.
+
+        OBS: O arquivo topics.json é um arquivo json que contém o nome dos tópicos que vc quer trabalhar em cima deles.
+
+    - Revise o plano gerado validando as partições que serão movidas, brokers que serão afetados e a possibilidade de sobrecarga.
+
+    - Execute o plano:
+
+        - kafka-reassign-partitions.sh \
+        --bootstrap-server <broker> \
+        --execute \
+        --reassignment-json-file reassignment.json
+
+    - Monitore o processo com o comando abaixo:
+
+        - kafka-reassign-partitions.sh \
+        --bootstrap-server <broker> \
+        --verify \
+        --reassignment-json-file reassignment.json
+
+
+
+Essa é a forma manual, porém existem outras formas de realizar através de ferramentas como o kafka manager e o linkedIn tools.
+
+
+=> Agora veremos como realizar o aumento do número de réplicas de partições de um determinado tópico. O processo pode ser feito também de forma manual utilizando o kafka-reassign-partitions.sh:
+
+    - Crie o arquivo topics.json com os tópicos que contém as partições que vc quer aumentar o rf
+    - Gere o plano com mesmo comando generate passado anteriormente
+    - Após o plano ser gerado, edite o número de réplicas manualmente.
+    - Execute o plano.
+    - Acompanhe o plano.
+
+OBS: Lebre-se de limitar o throughput para as réplicas entre os brokers para evitar saturamento de rede e discos.
 
 
 
