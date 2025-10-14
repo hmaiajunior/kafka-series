@@ -168,6 +168,32 @@ Essa é a forma manual, porém existem outras formas de realizar através de fer
 
 OBS: Lebre-se de limitar o throughput para as réplicas entre os brokers para evitar saturamento de rede e discos.
 
+==> Seção kafka cluster upgrade
+
+O upgrade de um cluster (subir a versão do kafka) é a  operação mais importante que pode ser feita em um cluster. A recomendação é que o update deve ser feito de forma frequente para manter o ambiente com o bus conhecidos corrigidos, obter novas features e ter as melhorias de performance.
+
+São 5 passos que devem ser seguidos para realizar um upgrade com sucesso:
+
+    1 - Configurar inter broker e a versão do log para a versão atual do kafka.
+    2 - Atualizar os binários do kafka.
+    3 - Alterar a versão do protocolo inter broker.
+    4 - Atualizar os clientes kafka caso a documentação especifique isso.
+    5 - Atualizar a versão do protocolo das mensagens.
+
+Ao fim de cada passo um restart deve ser realizado nos brokers.
+
+Aprofundando na comunicação entre os brokers:
+    Os brokers se comunicam usando uma versão específica de um protocolo. Os mais recentes conseguem comunicar com as versões mais recentes, porém o contrário não é verdadeiro. Assim, em um processo de atualização de versão do kafka, primeiro deve-se atualizar o software em si e só após esse procedimento comunicar aos brokers para utilizar a nova versão do inter protocol version
+
+    Em relação aos clientes nós temos um cenário onde uma versão antiga (ex 1.1) pode conversar com uma versão mais recente (2.0) e vice versa.
+
+Zero copy:
+
+Zero-copy é uma técnica de otimização de I/O (entrada/saída) que permite transferir dados diretamente da memória para o socket de rede, sem passar pela CPU ou fazer cópias intermediárias entre buffers.
+
+
+
+
 
 
 
