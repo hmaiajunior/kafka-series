@@ -191,6 +191,8 @@ Zero copy:
 
 Zero-copy é uma técnica de otimização de I/O (entrada/saída) que permite transferir dados diretamente da memória para o socket de rede, sem passar pela CPU ou fazer cópias intermediárias entre buffers.
 
+É preciso estar atento ao passo 5 do processo de upgrade, pois caso esteja sendo necessário realizar o processo de conversão devido o formato da mensagem, haverá um custo de performance para que isso aconteça.
+
 
 
 
