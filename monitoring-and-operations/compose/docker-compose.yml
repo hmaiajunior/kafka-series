@@ -18,6 +18,7 @@ services:
       ZOOKEEPER_INIT_LIMIT: 5
       ZOOKEEPER_SYNC_LIMIT: 2
       ZOOKEEPER_SERVERS: zookeeper:2888:3888
+      ZOOKEEPER_4LW_COMMANDS_WHITELIST: ruok,stat,conf,mntr
     healthcheck:
       test: echo stat | nc localhost 32181
       interval: 10s
