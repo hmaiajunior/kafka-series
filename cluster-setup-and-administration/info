@@ -1,0 +1,32 @@
+=> Zookeeper
+
+Quando falamos de zookeeper existem as chamadas "4 letter words" que são comandos simples  poderosos que podem ser enviados diretamente para a porta do cliente do zookeeper. São usados para:
+
+Verificar o estado do servidor
+
+Obter estatísticas
+
+Diagnosticar problemas
+
+Confirmar se o Zookeeper está vivo
+
+Exemplos: ruok, stat, conf, mntr, envi, dump, cons
+
+
+==> Kafka Configuration
+
+Ítens que são necessários um bom conhecimento para poder configurar muito bem o kafka:
+
+Arquitetura de SO
+Arquitetura de servidor
+Computação distribuída
+Operações de CPU
+Performance de rede
+I/O de disco
+RAM e Heap size
+Page cache
+Kafka e zookeeper
+
+Em muitos cenários as configurações do kafka devem ir se ajustando ao passar das semanas pq o comportamento do cluster vai mudando conforme os fluxos que passam ali também mudam. Então é preciso acompanhar de perto e ir fazendo ajustes finos na configuração do kafka.
+
+Atentar para a importância da configuração do advertised.listeners, que é onde será definido a forma que os clientes irão se conectar ao kafka.
