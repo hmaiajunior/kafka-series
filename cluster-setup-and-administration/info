@@ -30,3 +30,31 @@ Kafka e zookeeper
 Em muitos cenários as configurações do kafka devem ir se ajustando ao passar das semanas pq o comportamento do cluster vai mudando conforme os fluxos que passam ali também mudam. Então é preciso acompanhar de perto e ir fazendo ajustes finos na configuração do kafka.
 
 Atentar para a importância da configuração do advertised.listeners, que é onde será definido a forma que os clientes irão se conectar ao kafka.
+
+Realizar testes usando o script kafka-producer-perf-test do kafka.
+
+=> Kafka perfomance:
+
+Disks: I/O
+
+Se leitura e escrita estiver sendo um problema podemos pensar em adicionar varios discos em paralelo no kafka. Basta montar o disco no sistema e passar o caminho em logs.dirs no seguinte formato:
+
+logs.dirs=disk1/kafka-logs,/disk2/kafka-logs,/disk3/kafka-logs...
+
+Network:
+
+Sempre monitorar o uso da rede para garantir que ela não se tornará um gargalo. Sempre coloque os brokers e os zookeepers servers pŕoximos.
+
+RAM:
+
+A excelente performance do kafka se deve em grande parte ao uso de page cache utilizado na RAM. Daí a necessidade de entender a fundo dois pontos: kafka heap e OS page cache. O quanto de memória ram está sendo alocada para o processo java é a memória heap (4GB é suficiente) e o restante é utilizada pelo SO para fazer cache "bufferizando" dados para serem enviados ao disco dando uma performance incrível ao kafka. Atente-se para desabilitar o swapping para que o SO não uso o disco como uma extensão do cache. O GC deve ser configurado corretamente para evitar longas pausas no kafka.
+
+Importante monitorar o tempo de duração do GC, pois durante esse problema as threads podem ser pausadas interrompendo novas conexões. Acompanhar se há aumento na fila de requisições.
+
+CPU: 
+
+Geralmente CPU não é um gargalo, porém atente-se para situações em que se usa o SSL, pois cada payload deve ser encriptado/decriptado o qu irá adicionar um processamento extra.
+
+Others:
+
+Aprofundar no uso de kafka quotas. Realizar labs e validar o seu funcionamento.
