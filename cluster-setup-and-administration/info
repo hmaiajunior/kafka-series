@@ -47,14 +47,16 @@ Sempre monitorar o uso da rede para garantir que ela não se tornará um gargalo
 
 RAM:
 
-A excelente performance do kafka se deve em grande parte ao uso de page cache utilizado na RAM. Daí a necessidade de entender a fundo dois pontos: kafka heap e OS page cache. O quanto de memória ram está sendo alocada para o processo java é a memória heap (4GB é suficiente) e o restante é utilizada pelo SO para fazer cache "bufferizando" dados para serem enviados ao disco dando uma performance incrível ao kafka. Atente-se para desabilitar o swapping para que o SO não uso o disco como uma extensão do cache. O GC deve ser configurado corretamente para evitar longas pausas no kafka.
+A excelente performance do kafka se deve em grande parte ao uso de page cache utilizado na RAM. Daí a necessidade de entender a fundo dois pontos: kafka heap e OS page cache. O quanto de memória ram está sendo alocada para o processo java é a memória heap (normalmente 4GB é suficiente) e o restante é utilizada pelo SO para fazer cache "bufferizando" dados para serem enviados ao disco dando uma performance incrível ao kafka. Atente-se para desabilitar o swapping para que o SO não uso o disco como uma extensão do cache. O GC deve ser configurado corretamente para evitar longas pausas no kafka.
 
-Importante monitorar o tempo de duração do GC, pois durante esse problema as threads podem ser pausadas interrompendo novas conexões. Acompanhar se há aumento na fila de requisições.
+Importante monitorar o tempo de duração do GC, pois durante esse momento as threads podem ser pausadas interrompendo novas conexões. Acompanhar se há aumento na fila de requisições.
 
 CPU: 
 
-Geralmente CPU não é um gargalo, porém atente-se para situações em que se usa o SSL, pois cada payload deve ser encriptado/decriptado o qu irá adicionar um processamento extra.
+Geralmente CPU não é um gargalo, porém atente-se para situações em que se usa o SSL, pois cada payload deve ser encriptado/decriptado o que irá adicionar um processamento extra.
 
 Others:
 
 Aprofundar no uso de kafka quotas. Realizar labs e validar o seu funcionamento.
+
+Ficar atento com a métrica "unclean.leader.election.enable", se marcada como true atente-se para o tradeoff (durabilidade x disponibilidade) que pode ocorrer de perda de dados caso uma partição não sincronizada seja eleita a nova líder.
