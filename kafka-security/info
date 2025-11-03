@@ -54,3 +54,15 @@ Agora vamos realizar o import do certificado público da CA e do certificado ass
 
 ==> keytool -keystore kafka.server.keystore.jks -alias CARoot -import -file ca-cert -storepass $SRVPASS -keypass $SRVPASS -noprompt
 ==> keytool -keystore kafka.server.keystore.jks -import -file cert-signed -storepass $SRVPASS -keypass $SRVPASS -noprompt
+
+
+Procedimento para gerar a chave para o cliente:
+
+==> openssl genrsa -out client-key.pem 2048
+
+==> openssl req -new -key client-key.pem -out client-req.csr \
+  -subj "/CN=kafka-client"
+
+==> openssl x509 -req -in client-req.csr -CA ca-cert.pem -CAkey ca-key.pem \
+  -CAcreateserial -out client-cert.pem -days 365 -sha256
+
