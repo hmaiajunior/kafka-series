@@ -1,0 +1,56 @@
+Ao trabalhar com segurança no kafka falamos de autenticação, autorização e criptografia.
+
+Criptografia:
+
+Embora geralmente se use o termo SSL, o protocolo mais atual a ser usado é o TLS (Transport Layer Security), que é o sucessor do SSL e tem como objetivo encriptar a conexão entre dois endpoints para comunicação segura.
+
+Ao utilizar uma comunicação criptografa entre o client o broker kafka, o client confia no certificado do broker e dessa forma eles podem trocar informações com segurança. 
+
+É possível também utilizar o SSL/TLS para um processo de autenticação onde o broker irá autenticar o client através de um processo chamado de mTLS.
+
+Hands-On:
+
+Criando uma CA:
+
+Vamos configurar o nosso cluster para começar a aceitar requisições TLS e para isso iniciaremos criando uma CA com o comando abaixo:
+
+==> openssl req -new -newkey rsa:4096 -days 365 -x509 -subj "/CN=Kafka-Security-CA" -keyout ca-key -out ca-cert -nodes
+
+O comando acima irá gerar 2 arquivos, o arquivo "ca-key" (chave-privada) que será usado para assinar certificados de clientes ou brokers e o "ca-cert" (certificado público) que é o certificado que deve ser distribuído aos brokers e clientes para que confiem nas assinaturas feitas pela CA.
+
+O arquivo ca-cert funciona como a truststore, permitindo que o broker ou cliente Kafka valide os certificados apresentados durante a conexão SSL. Se esses certificados forem assinados pela mesma Autoridade Certificadora (CA) que emitiu o ca-cert, eles serão reconhecidos como confiáveis e a conexão será estabelecida com sucesso.
+
+Agora vamos executar o comando para criar a keystore do nosso primeiro broker:
+
+Antes de executar exporte a variável SRVPASS: export SRVPASS=serversecret
+
+==> keytool -genkey -keystore kafka.external.keystore.jks -validity 365 -storepass $SRVPASS -keypass $SRVPASS -dname "CN=localhost" -ext SAN=DNS:localhost,IP:127.0.0.1 -storetype pkcs12
+
+A keystore gerada pode ser verificada com o comando abaixo:
+
+keytool -list -v -keystore kafka.server.keystore.jks
+
+Agora o comando abaixo deve ser executado para criar uma requisição de assinatura de certificado, CSR:
+
+==> keytool -keystore kafka.server.keystore.jks -certreq -file cert-file -storepass $SRVPASS -keypass $SRVPASS
+
+Com o comando acima executado o arquivo cert-file foi gerado. Esse arquivo é o CSR.
+
+Agora vamos assinar o certificado a partir da requisição de assinatura gerada no comando anterior:
+
+==> openssl x509 -req -CA ca-cert -CAkey ca-key -in cert-file -out cert-signed -days 365 -CAcreateserial -passin pass:$SRVPASS
+
+O arquivo cert-signed, que é o certificado assinado, foi gerado. Utilize o comando abaixo para verificar o certificado:
+
+keytool -printcert -v -file cert-signed
+
+Agora vamos executar o comando que irá importar o certificado assinado na truststore, que é essencial para que o kafka confie em certificados assinados por essa CA:
+
+==> keytool -keystore kafka.server.truststore.jks -alias CARoot -import -file ca-cert -storepass $SRVPASS -keypass $SRVPASS -noprompt
+
+Lembrando que o ca-cert passado pelo comando é o certificado público gerado pela CA no primeiro comando que foi executado para gerar a CA.
+
+Agora vamos realizar o import do certificado público da CA e do certificado assinado pela CA que será utilizado pelo broker. O import será feito na keystore e deve ser feito exatamente na ordem abaixo:
+
+==> keytool -keystore kafka.server.keystore.jks -alias CARoot -import -file ca-cert -storepass $SRVPASS -keypass $SRVPASS -noprompt
+==> keytool -keystore kafka.server.keystore.jks -import -file cert-signed -storepass $SRVPASS -keypass $SRVPASS -noprompt
