@@ -22,7 +22,7 @@ O arquivo ca-cert funciona como a truststore, permitindo que o broker ou cliente
 
 Agora vamos executar o comando para criar a keystore do nosso primeiro broker:
 
-Antes de executar exporte a variável SRVPASS: export SRVPASS=serversecret
+Antes de executar, exporte a variável SRVPASS: export SRVPASS=serversecret
 
 ==> keytool -genkey -keystore kafka.external.keystore.jks -validity 365 -storepass $SRVPASS -keypass $SRVPASS -dname "CN=localhost" -ext SAN=DNS:localhost,IP:127.0.0.1 -storetype pkcs12
 
@@ -54,6 +54,26 @@ Agora vamos realizar o import do certificado público da CA e do certificado ass
 
 ==> keytool -keystore kafka.server.keystore.jks -alias CARoot -import -file ca-cert -storepass $SRVPASS -keypass $SRVPASS -noprompt
 ==> keytool -keystore kafka.server.keystore.jks -import -file cert-signed -storepass $SRVPASS -keypass $SRVPASS -noprompt
+
+OBSERVAÇÃO IMPORTANTE:
+
+Ao gerar a keystore com o comando acima eu não consegui validar a autenticação com o broker, pois estava tomando erro de ssl handshake failed. Isso estava acontecendo porque a chave privada do certificado do broker, o que não pode ser realizado com o keytool. 
+
+Para corrigir essa questão utilizei o openssl no comando abaixo:
+
+openssl pkcs12 -export -in broker-cert.pem -inkey broker-key.pem -out kafka.server.keystore.p12 -name kafka-broker -CAfile ca-cert -caname Kafka-Security-CA -passout pass:$SRVPASS
+
+E depois executei o comando que importa um keystore no formato PKCS#12 (.p12) para o formato JKS (.jks), que é o mais comum em ambientes Java/Kafka:
+
+keytool -importkeystore -destkeystore kafka.server.keystore.jks -srckeystore kafka.server.keystore.p12 -srcstoretype PKCS12 -alias kafka-broker -deststorepass $SRVPASS -destkeypass $SRVPASS -srcstorepass $SRVPASS
+
+
+
+Execute o comando abaixo para testar a conexão via SSL com o broker:
+
+openssl s_client -connect <<your-public-DNS>>:9093
+
+openssl s_client   -connect localhost:9091   -cert client-cert.pem   -key client-key.pem   -CAfile ca-cert   -showcerts
 
 
 Procedimento para gerar a chave para o cliente:

@@ -1,1 +1,3 @@
 monitoring-and-operations/pem/*
+monitoring-and-operations/compose/ssl/*
+monitoring-and-operations/compose/.env
