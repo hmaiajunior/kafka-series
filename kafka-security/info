@@ -86,3 +86,42 @@ Procedimento para gerar a chave para o cliente:
 ==> openssl x509 -req -in client-req.csr -CA ca-cert.pem -CAkey ca-key.pem \
   -CAcreateserial -out client-cert.pem -days 365 -sha256
 
+
+Agora é necessário realizar a criação da keystore e truststore para o cliente. 
+
+Segue comando para criação da truststore onde nela já foi inserida o certificado público da nossa CA o que significa que todos os certificados assinados por essa CA serão reconhecidos como válidos para esse cliente:
+
+keytool -keystore kafka.client.truststore.jks -alias CARoot -import -file ca-cert  -storepass $CLIPASS -keypass $CLIPASS -noprompt
+
+Uma vez criada a CA será necessário apenas configurar um arquivo de configuração com as propriedades abaixo:
+
+security.protocol=SSL
+ssl.truststore.location=/home/henrique/Documentos/treinamentos/kafka-series/kafka-security/app-cert-ssl/kafka.client.truststore.jks
+ssl.truststore.password=clientpass
+
+IMPORTATE: Se o broker exigir autenticação mTLS será necessário que o app também apresente um certificado, apenas o certificado público da CA não será suficiente na truststore.
+
+No nosso caso está sendo exigida a autenticação mútua que citei acima, desse modo iremos criar um certificado para a nossa aplicação python conseguir produzir mensagens autenticando via ssl/tls no broker. Segue os comandos necessários para a criação do certificado:
+
+1 - Gerar chave privada do cliente:
+
+openssl genrsa -out client-key.pem 2048
+
+2 - Gerar o CSR:
+
+openssl req -new -key client-key.pem -out client.csr -subj "/CN=python-producer"
+
+3 - Assinar o certificado com a CA:
+
+openssl x509 -req -in client.csr -CA ca-cert -CAkey ca-key -CAcreateserial -out client-cert.pem -days 365 -sha256
+
+Já em nosso python producer a configuração abaixo será necessária para conseguir conectar no cluster:
+
+# Configurações de conexão com o Kafka via SSL/TLS com mTLS
+producer_config = {
+    'bootstrap.servers': 'localhost:9091,localhost:9092,localhost:9093',
+    'security.protocol': 'SSL',
+    'ssl.ca.location': '/home/henrique/Documentos/treinamentos/kafka-series/kafka-security/app-cert-ssl/ca-cert',
+    'ssl.certificate.location': '/home/henrique/Documentos/treinamentos/kafka-series/kafka-security/app-cert-ssl/client-cert.pem',
+    'ssl.key.location': '/home/henrique/Documentos/treinamentos/kafka-series/kafka-security/app-cert-ssl/client-key.pem',
+}
