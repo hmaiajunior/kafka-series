@@ -115,6 +115,18 @@ openssl req -new -key client-key.pem -out client.csr -subj "/CN=python-producer"
 
 openssl x509 -req -in client.csr -CA ca-cert -CAkey ca-key -CAcreateserial -out client-cert.pem -days 365 -sha256
 
+OBS: A qualquer momento você pode verificar o certificado gerado com o comando abaixo:
+
+==> openssl x509 -in client-cert.pem -text -noout
+
+ou apenas o comando abaixo para verificar exibir o CN do certificado que é o que importa na hora de configurar as ACLs:
+
+==> openssl x509 -in client-cert.pem -noout -subject
+
+Podemos listar de forma simultânea o CN do principal que será usado no certificado e o CN do issuer que assinou o certificado:
+
+==> openssl x509 -in client-cert.pem -noout -subject -issuer
+
 Já em nosso python producer a configuração abaixo será necessária para conseguir conectar no cluster:
 
 # Configurações de conexão com o Kafka via SSL/TLS com mTLS
@@ -125,3 +137,29 @@ producer_config = {
     'ssl.certificate.location': '/home/henrique/Documentos/treinamentos/kafka-series/kafka-security/app-cert-ssl/client-cert.pem',
     'ssl.key.location': '/home/henrique/Documentos/treinamentos/kafka-series/kafka-security/app-cert-ssl/client-key.pem',
 }
+
+OBS:. Um ponto fundamental é que quando adicionamos um certificado para o cliente ele passa também a ser autenticado no broker (mTLS) e com isso passa a ter uma identidade. A partir daí podemos começar a fazer o uso de ACLs para autorizar determinadas ações em nosso cluster.
+
+A configuração no broker que vai exigir a autenticação SSL do client é a seguinte:
+
+SSL_CLIENT_AUTH: required
+
+# ACLs
+
+Quando trabalhamos com ACLs podemos defini-las no seguinte formato:
+
+Principal {P} - Allowed | Denied
+Operation {O} - Operation
+Host      {H} - Host
+Resource  {R} - Resource
+Resource Pattern {RP} - Resource Pattern
+
+Por padrão, se nenhum padrão de recurso (RP) corresponder a um recurso (R), então R não terá ACLs associadas e apenas o super usuário do kafka terá permissão em cima de R. Esse padrão pode ser alterado em server.properties:
+
+allow.everyone.if.no.acl.found=true
+
+Outro ponto importante é que  aqui não existe nada relacionado a grupo. As permissões são dadas diretamente para um client / user.
+
+As ACLs são armazenadas no zookeeeper.
+
+
